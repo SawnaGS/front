@@ -1,19 +1,20 @@
-FROM node:19.5.0-alpine
+FROM node:18-alpine AS build
 
 WORKDIR /app
 
-COPY package*.json ./
-
+COPY package.json package-lock.json ./
 RUN npm install
-
-RUN npm install -g @angular/cli
 
 COPY . .
 
-RUN ng build --configuration=production
+RUN npm run build
 
-FROM nginx:latest
+FROM nginx:alpine
 
-COPY dist/library-fe/browser /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+COPY --from=build /app/dist/skuska-fe/browser /usr/share/nginx/html
 
 EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]
